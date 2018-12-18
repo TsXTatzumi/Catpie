@@ -1,4 +1,4 @@
-20import snowboydecoder
+import snowboydecoder
 import threading
 import Queue
 import glob
