@@ -1,4 +1,4 @@
-import snowboydecoder
+20import snowboydecoder
 import threading
 import Queue
 import glob
@@ -42,6 +42,37 @@ class ThreadedDetector(threading.Thread):
     
         return models
 
+    def load_sensitivities(self):
+    
+        sensitivities = [] 
+        sensitivityValues = []
+    
+        with open(MODEL_DIR + 'sensitivities.cfg') as sensitivityFile:
+            sensitivities = [action.rstrip('\n') for sensitivity in sensitivityFile]
+            sensitivities = [action.replace(' ', '').split(':') for action in sensitivities]
+            models = [model[len(MODEL_DIR):-5] for model in self.models]
+            
+            
+            for i in range (0, len(models)):
+
+                found = False 
+                for sensitivity in sensitivities:
+
+                    found = False
+
+                    if models[i] == sensitivity[0]:
+                        sensitivityValues.append(sensitivity[1])
+                        found = True 
+                        break
+
+                if found == False:
+                    sensitivityValues.append(0.5)
+
+                    
+        
+            
+            return sensitivityValues
+    
     def load_actions(self):
     
         actions = []
@@ -77,7 +108,7 @@ class ThreadedDetector(threading.Thread):
                         "<%s> module not found" % action[1][0]
             print actions
             return actions
-    
+
     def __init__(self, **kwargs):
         """
         Initialize Detectors object. **kwargs is for any __init__ keyword
@@ -91,6 +122,7 @@ class ThreadedDetector(threading.Thread):
         threading.Thread.__init__(self)
         self.models = self.load_models()
         self.actions = self.load_actions()
+        self.sensitivities = self.load_sensitivities()
         self.init_kwargs = kwargs
         self.interrupted = True
         self.commands = Queue.Queue()
@@ -98,11 +130,13 @@ class ThreadedDetector(threading.Thread):
         self.detectors = None  # Initialize when thread is run in self.run()
         self.run_kwargs = None  # Initialize when detectors start in self.start_recog()
         
+        change_sensitivity(self.sensitivities)
+
     def initialize_detectors(self):
         """
         Returns initialized Catpie HotwordDetector objects
         """
-        self.detectors = snowboydecoder.HotwordDetector(self.models, self.actions, **self.init_kwargs)
+        self.detectors = snowboydecoder.HotwordDetector(self.models, self.actions, **self.init_kwargs, sensitivity = self.sensitivities)
 
     def run(self):
         """
@@ -150,7 +184,7 @@ class ThreadedDetector(threading.Thread):
         """
         Terminates recognition thread - called when program terminates
         """
-        print "hi"
+        
         self.pause_recog()
         self.commands.put("Terminate")
 

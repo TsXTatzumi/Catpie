@@ -32,7 +32,7 @@ def pie():
     signal.signal(signal.SIGINT, signal_handler)
     
     # Initialize ThreadedDetector object and start the detection thread
-    threaded_detector = snowboythreaded.ThreadedDetector(sensitivity=0.5)
+    threaded_detector = snowboythreaded.ThreadedDetector(sensitivity=[])
     threaded_detector.start()
 
     # main loop

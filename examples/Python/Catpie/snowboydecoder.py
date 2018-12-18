@@ -139,6 +139,7 @@ class HotwordDetector(object):
             frames_per_buffer=2048,
             stream_callback=audio_callback)
         
+        self.models = [model[len(MODEL_DIR):-5] for model in decoder_model]
         self.actions = decoder_actions
         self.calibrating = calibrating;
 
@@ -270,6 +271,9 @@ class HotwordDetector(object):
             
         ####################################
             elif state == "CALIBRATING":
+                if list_models == True
+                    for i in range(0, len(self.models)):
+                        logger.info(" ID: " + (i + 1) + "   " + self.models[i])
                 
                 keywordIndex = int(raw_input("Type index of keyword: "))
         ####################################
