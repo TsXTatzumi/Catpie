@@ -1,0 +1,210 @@
+
+   Cell Contents
+|-------------------------|
+|                   Count |
+|         Expected Values |
+| Chi-square contribution |
+|             Row Percent |
+|          Column Percent |
+|           Total Percent |
+|            Std Residual |
+|-------------------------|
+
+Total Observations in Table:  200 
+
+             |  
+             | l_silence  |   l_noise  | Row Total | 
+-------------|-----------|-----------|-----------|
+       RIGHT |       87  |       70  |      157  | 
+             |   78.500  |   78.500  |           | 
+             |    0.920  |    0.920  |           | 
+             |   55.414% |   44.586% |   78.500% | 
+             |   87.000% |   70.000% |           | 
+             |   43.500% |   35.000% |           | 
+             |    0.959  |   -0.959  |           | 
+-------------|-----------|-----------|-----------|
+       WRONG |       13  |       30  |       43  | 
+             |   21.500  |   21.500  |           | 
+             |    3.360  |    3.360  |           | 
+             |   30.233% |   69.767% |   21.500% | 
+             |   13.000% |   30.000% |           | 
+             |    6.500% |   15.000% |           | 
+             |   -1.833  |    1.833  |           | 
+-------------|-----------|-----------|-----------|
+Column Total |      100  |      100  |      200  | 
+             |   50.000% |   50.000% |           | 
+-------------|-----------|-----------|-----------|
+
+ 
+Statistics for All Table Factors
+
+
+Pearson's Chi-squared test 
+------------------------------------------------------------
+Chi^2 =  8.561695     d.f. =  1     p =  0.003433097 
+
+Pearson's Chi-squared test with Yates' continuity correction 
+------------------------------------------------------------
+Chi^2 =  7.584062     d.f. =  1     p =  0.005888661 
+
+ 
+Fisher's Exact Test for Count Data
+------------------------------------------------------------
+Sample estimate odds ratio:  2.853091 
+
+Alternative hypothesis: true odds ratio is not equal to 1
+p =  0.005485131 
+95% confidence interval:  1.326503 6.434042 
+
+Alternative hypothesis: true odds ratio is less than 1
+p =  0.9991341 
+95% confidence interval:  0 5.676128 
+
+Alternative hypothesis: true odds ratio is greater than 1
+p =  0.002742565 
+95% confidence interval:  1.48032 Inf 
+
+
+ 
+       Minimum expected frequency: 21.5 
+
+
+   Cell Contents
+|-------------------------|
+|                   Count |
+|         Expected Values |
+| Chi-square contribution |
+|             Row Percent |
+|          Column Percent |
+|           Total Percent |
+|            Std Residual |
+|-------------------------|
+
+Total Observations in Table:  200 
+
+             |  
+             | b_silence  |   b_noise  | Row Total | 
+-------------|-----------|-----------|-----------|
+       RIGHT |       86  |       76  |      162  | 
+             |   81.000  |   81.000  |           | 
+             |    0.309  |    0.309  |           | 
+             |   53.086% |   46.914% |   81.000% | 
+             |   86.000% |   76.000% |           | 
+             |   43.000% |   38.000% |           | 
+             |    0.556  |   -0.556  |           | 
+-------------|-----------|-----------|-----------|
+       WRONG |       14  |       24  |       38  | 
+             |   19.000  |   19.000  |           | 
+             |    1.316  |    1.316  |           | 
+             |   36.842% |   63.158% |   19.000% | 
+             |   14.000% |   24.000% |           | 
+             |    7.000% |   12.000% |           | 
+             |   -1.147  |    1.147  |           | 
+-------------|-----------|-----------|-----------|
+Column Total |      100  |      100  |      200  | 
+             |   50.000% |   50.000% |           | 
+-------------|-----------|-----------|-----------|
+
+ 
+Statistics for All Table Factors
+
+
+Pearson's Chi-squared test 
+------------------------------------------------------------
+Chi^2 =  3.248863     d.f. =  1     p =  0.07147303 
+
+Pearson's Chi-squared test with Yates' continuity correction 
+------------------------------------------------------------
+Chi^2 =  2.631579     d.f. =  1     p =  0.1047575 
+
+ 
+Fisher's Exact Test for Count Data
+------------------------------------------------------------
+Sample estimate odds ratio:  1.933478 
+
+Alternative hypothesis: true odds ratio is not equal to 1
+p =  0.1039411 
+95% confidence interval:  0.8872386 4.353477 
+
+Alternative hypothesis: true odds ratio is less than 1
+p =  0.9767767 
+95% confidence interval:  0 3.847006 
+
+Alternative hypothesis: true odds ratio is greater than 1
+p =  0.05197053 
+95% confidence interval:  0.9932736 Inf 
+
+
+ 
+       Minimum expected frequency: 19 
+
+
+   Cell Contents
+|-------------------------|
+|                   Count |
+|         Expected Values |
+| Chi-square contribution |
+|             Row Percent |
+|          Column Percent |
+|           Total Percent |
+|            Std Residual |
+|-------------------------|
+
+Total Observations in Table:  200 
+
+             |  
+             | s_silence  |   s_noise  | Row Total | 
+-------------|-----------|-----------|-----------|
+       RIGHT |       81  |       83  |      164  | 
+             |   82.000  |   82.000  |           | 
+             |    0.012  |    0.012  |           | 
+             |   49.390% |   50.610% |   82.000% | 
+             |   81.000% |   83.000% |           | 
+             |   40.500% |   41.500% |           | 
+             |   -0.110  |    0.110  |           | 
+-------------|-----------|-----------|-----------|
+       WRONG |       19  |       17  |       36  | 
+             |   18.000  |   18.000  |           | 
+             |    0.056  |    0.056  |           | 
+             |   52.778% |   47.222% |   18.000% | 
+             |   19.000% |   17.000% |           | 
+             |    9.500% |    8.500% |           | 
+             |    0.236  |   -0.236  |           | 
+-------------|-----------|-----------|-----------|
+Column Total |      100  |      100  |      200  | 
+             |   50.000% |   50.000% |           | 
+-------------|-----------|-----------|-----------|
+
+ 
+Statistics for All Table Factors
+
+
+Pearson's Chi-squared test 
+------------------------------------------------------------
+Chi^2 =  0.1355014     d.f. =  1     p =  0.7127949 
+
+Pearson's Chi-squared test with Yates' continuity correction 
+------------------------------------------------------------
+Chi^2 =  0.03387534     d.f. =  1     p =  0.8539722 
+
+ 
+Fisher's Exact Test for Count Data
+------------------------------------------------------------
+Sample estimate odds ratio:  0.8737702 
+
+Alternative hypothesis: true odds ratio is not equal to 1
+p =  0.8542035 
+95% confidence interval:  0.3957382 1.916191 
+
+Alternative hypothesis: true odds ratio is less than 1
+p =  0.4271017 
+95% confidence interval:  0 1.706114 
+
+Alternative hypothesis: true odds ratio is greater than 1
+p =  0.7093572 
+95% confidence interval:  0.4454693 Inf 
+
+
+ 
+       Minimum expected frequency: 18 
+
