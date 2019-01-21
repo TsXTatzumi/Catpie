@@ -2,7 +2,8 @@
 
 BT_NAME="BlingHelmet 60"
 LAST_CATPIE_COMMAND="Last NYAN"
-CONFIG_CATPIE="$(dirname $(dirname $(realpath $0)))/Catpie.cfg"
+MODULES_DIR=$(dirname $(realpath $0))
+CONFIG_CATPIE="$(dirname $MODULES_DIR)/Catpie.cfg"
 
 
 if [ $# -lt 3 ]; then
