@@ -5,8 +5,11 @@ import pyaudio
 import snowboydetect
 import time
 import wave
-import os
+import sys
+import keyboard
 import logging
+import os
+from os import system, name 
 from ctypes import *
 from contextlib import contextmanager
 
@@ -15,6 +18,7 @@ logger = logging.getLogger("snowboy")
 logger.setLevel(logging.INFO)
 TOP_DIR = os.path.dirname(os.path.abspath(__file__))
 
+MODEL_DIR = os.path.join(TOP_DIR, 'resources/models/')
 RESOURCE_FILE = os.path.join(TOP_DIR, "resources/common.res")
 DETECT_DING = os.path.join(TOP_DIR, "resources/ding.wav")
 DETECT_DONG = os.path.join(TOP_DIR, "resources/dong.wav")
@@ -76,6 +80,81 @@ def play_audio_file(fname=DETECT_DING):
     audio.terminate()
 
 
+# define our clear function 
+def clear(): 
+  
+    # for windows 
+    if name == 'nt': 
+        _ = system('cls') 
+  
+    # for mac and linux(here, os.name is 'posix') 
+    else: 
+        _ = system('clear')
+  
+
+inputstr = ""
+once = ""
+
+def setInput(val):
+    global inputstr
+    global once
+        
+    if val == "esc" or val == "enter":
+        if True:
+            inputstr = val
+    else:
+        inputstr = val
+    
+def init_hotkeys():
+    keyboard.add_hotkey('up', setInput, args=['up'])
+    keyboard.add_hotkey('down', setInput, args=['down'])
+    keyboard.add_hotkey('left', setInput, args=['left'])
+    keyboard.add_hotkey('right', setInput, args=['right'])
+    keyboard.add_hotkey('enter', setInput, args=['enter'])
+    keyboard.add_hotkey('escape', setInput, args=['esc'])
+    
+    
+def store_sensitivities(models, new_sensitivityValues):
+    
+    sensitivities = [] 
+
+    with open(MODEL_DIR + 'sensitivities.cfg') as sensitivityFile:
+        sensitivities = [sensitivity.rstrip('\n') for sensitivity in sensitivityFile]
+        sensitivities = [sensitivity.replace(' ', '').split(':') for sensitivity in sensitivities]
+        
+        
+        for i in range (0, len(models)):
+
+            found = False 
+            for sensitivity in sensitivities:
+
+                found = False
+                
+                if models[i] == sensitivity[0]:
+                    found = True 
+                    break
+                
+            if not found:
+                sensitivities.append([models[i], 0.5])
+        
+            
+        for i in range (0, len(sensitivities)):
+            
+            if sensitivities[i][0] in models:
+                index = models.index(sensitivities[i][0])
+                    
+                sensitivities[i][1] = new_sensitivityValues[index]
+        
+    
+    with open(MODEL_DIR + 'sensitivities.cfg', "w") as sensitivityFile:
+        
+        for i in range (0, len(sensitivities)):
+            
+            sensitivityFile.write(sensitivities[i][0]      + ":" \
+                                + str(sensitivities[i][1]) + "\n")
+                    
+                    
+
 class HotwordDetector(object):
     """
     Snowboy decoder to detect whether a keyword specified by `decoder_model`
@@ -94,8 +173,7 @@ class HotwordDetector(object):
                  resource=RESOURCE_FILE,
                  sensitivity=[],
                  audio_gain=1,
-                 apply_frontend=False,
-                 calibrating=False):
+                 apply_frontend=False):
 
         def audio_callback(in_data, frame_count, time_info, status):
             self.ring_buffer.extend(in_data)
@@ -115,7 +193,7 @@ class HotwordDetector(object):
         self.detector.SetAudioGain(audio_gain)
         self.detector.ApplyFrontend(apply_frontend)
         self.num_hotwords = self.detector.NumHotwords()
-
+        
         if len(decoder_model) > 1 and len(sensitivity) == 1:
             sensitivity = sensitivity*self.num_hotwords
         if len(sensitivity) != 0:
@@ -141,14 +219,16 @@ class HotwordDetector(object):
         
         self.models = [model[len(MODEL_DIR):-5] for model in decoder_model]
         self.actions = decoder_actions
-        self.calibrating = calibrating;
+        self.sensitivities = sensitivity
 
     def start(self, detected_callback=play_audio_file,
               interrupt_check=lambda: False,
               sleep_time=0.03,
               action_callback=None,
+              stop_callback=None,
               recording_timeout=5.0,
-              further_keywords_timeout=1.0):
+              further_keywords_timeout=1.0,
+              calibrating=False):
         """
         Start the voice detector. For every `sleep_time` second it checks the
         audio buffer for triggering keywords. If detected, then call
@@ -177,6 +257,9 @@ class HotwordDetector(object):
                                          after a matching voice-command was found.
         :return: None
         """
+        global inputstr
+        
+        init_hotkeys()
 
         ####################################
         if interrupt_check():
@@ -196,11 +279,27 @@ class HotwordDetector(object):
         ####################################
         logger.debug("detecting...")
 
-        if self.calibrating:
+        if calibrating:
             state = "CALIBRATING"
+            global once
+            
+            model_strings = ["*SILENCE*", "WAKEWORD"]
+            for i in range(1, len(self.models)):
+                model_strings.append("Keyword: " + self.models[i])
+            
+            calibrationResults = []
+            for i in range(0, len(self.models)):
+                calibrationResults.append([0.0, 0.0])
+                
+            cursorRow = 0
+            dotcount = 0
+            timestampTimeout = 0
+            lastWord = 0
         else:
             state = "PASSIVE"
             
+        clear()
+        
         while True:
             
             if interrupt_check():
@@ -221,21 +320,31 @@ class HotwordDetector(object):
             #small state machine to handle recording of phrase after keyword
             if state == "PASSIVE":
                 if status == 1: #wakeword found
-                    self.recordedData = []
-                    self.recordedData.append(data)
                     keywords = []
                     timestampStartListening  = time.time()
                     timestampEndListening  = timestampStartListening + recording_timeout
-                    message = "Keyword " + str(status) + " detected at time: "
-                    message += time.strftime("%Y-%m-%d %H:%M:%S",
+                    messageLine1 = "WAKEWORD detected at time: "
+                    messageLine1 += time.strftime("%Y-%m-%d %H:%M:%S",
                                          time.localtime(time.time()))
-                    logger.info(message)
+                    logger.info(messageLine1)
+                    
+                    clear()
+                    sys.stdout.write(messageLine1)
+                    sys.stdout.flush()
+                    
                     callback = detected_callback[status-1]
                     if callback is not None:
                         callback()
 
                     state = "ACTIVE"
                     continue
+                
+                if inputstr == "esc" :
+                    store_sensitivities(self.models, self.sensitivities)
+                    stop_callback("exit")
+
+                inputstr = ""
+                once = False
 
         ####################################
             elif state == "ACTIVE":
@@ -250,53 +359,167 @@ class HotwordDetector(object):
                     for action in self.actions:
                         if sorted(keywords) == sorted(action[0]):
                             action_callback(action[1])
-                        
+                    
+                    logger.info(messageLine2)
+                    
+                    clear()
+                    sys.stdout.write(messageLine1)
+                    sys.stdout.write("\n")
+                    sys.stdout.write(messageLine2)
+                    sys.stdout.flush()
+                    
                     state = "PASSIVE"
                     continue
 
+                if status == 1: # WAKEWORD found - reset
+                    keywords = []
+                    
                 if status > 1: #keyword found
                     timestampEndListening = timestampStartListening + recording_timeout
                     
-                    message = "Keyword " + str(status) + " detected at time: "
-                    message += time.strftime("%Y-%m-%d %H:%M:%S",
-                                         time.localtime(time.time()))
-                    logger.info(message)
                     keywords.append(status)
+                    
+                    messageLine2 = "["
+                    for key in keywords:
+                        if messageLine2 != "[":
+                            messageLine2 += ", "
+                            
+                        messageLine2 += self.models[key - 1]
+                    
+                    messageLine2 += "]"
                     
                     for action in self.actions:
                         if sorted(keywords) == sorted(action[0]):
                             timestampEndListening = timestampStartListening + further_keywords_timeout
+                            messageLine2 += "  ->  " + str(action[1])
+                    
+                    clear()
+                    sys.stdout.write(messageLine1)
+                    sys.stdout.write("\n")
+                    sys.stdout.write(messageLine2)
+                    sys.stdout.flush()
+                
+                if inputstr == "esc":
+                    store_sensitivities(self.models, self.sensitivities)
+                    stop_callback("exit")
 
-                self.recordedData.append(data)
+                inputstr = ""
             
         ####################################
             elif state == "CALIBRATING":
-                if list_models == True
-                    for i in range(0, len(self.models)):
-                        logger.info(" ID: " + (i + 1) + "   " + self.models[i])
                 
-                keywordIndex = int(raw_input("Type index of keyword: "))
+                if inputstr == "up":
+                    cursorRow = max(cursorRow - 1, 0)
+                elif inputstr == "down":
+                    cursorRow = min(cursorRow + 1, len(self.models) - 1)
+
+                elif inputstr == "left":
+                    self.sensitivities[cursorRow] = max(self.sensitivities[cursorRow] - 0.003, 0.0)
+                elif inputstr == "right":
+                    self.sensitivities[cursorRow] = min(self.sensitivities[cursorRow] + 0.003, 1.0)
+
+                elif inputstr == "enter":
+                    store_sensitivities(self.models, self.sensitivities)
+                    stop_callback("-reboot oven")
+                elif inputstr == "esc":
+                    store_sensitivities(self.models, self.sensitivities)
+                    stop_callback("exit")
+
+                inputstr = ""
+
+                clear()
+                    
+                for i in range(0, len(self.models)):
+
+                    if i == cursorRow:
+                        sys.stdout.write("-> ")
+
+                    sys.stdout.write("ID: " + str(i) + " \t" + self.models[i] + ":\t")
+                 
+                    if len(self.models[i]) < 7:
+                        sys.stdout.write("\t")
+
+                    if calibrationResults[i][0] > 0:
+                        sys.stdout.write(str(round(calibrationResults[i][1] / calibrationResults[i][0] * 100, 1)) + "%  (" + str(calibrationResults[i][0]) + ")")
+                    else:
+                        sys.stdout.write("n/a  (" + str(calibrationResults[i][0]) + ")")
+                    
+                    sys.stdout.write("\t< " + str(self.sensitivities[i] * 100) + "% >\n")
+                    
+                sys.stdout.write("-------------------\n\n")
+                
+                if status < 0:
+                    if dotcount > 0:
+                        state = "ENTER CORRECT"
+                        dotcount = 0
+                        
+                    sys.stdout.write(model_strings[lastWord] + "\n")
+                    
+                elif status == 0:
+                    dotcount += 1
+                    
+                    sys.stdout.write("[" + ("." * dotcount) + "]\n")
+                    
+                    timestampTimeout = time.time() + recording_timeout
+                    lastWord = 0
+                    
+                elif status > 0:
+                    if dotcount > 0:
+                        state = "ENTER CORRECT"
+                        dotcount = 0
+                    
+                    sys.stdout.write(model_strings[status] + "\n")
+                    
+                    timestampTimeout = time.time() + recording_timeout
+                    lastWord = status
+
+                sys.stdout.flush()
+                
+         ####################################
+            elif state == "ENTER CORRECT":
+                
+                if inputstr == "up":
+                    cursorRow = max(cursorRow - 1, 0)
+                elif inputstr == "down":
+                    cursorRow = min(cursorRow + 1, len(self.models) - 1)
+
+                elif inputstr == "enter":
+                    calibrationResults[cursorRow][0] += 1
+                    if (lastWord - 1) == cursorRow:
+                        calibrationResults[cursorRow][1] += 1
+                    
+                    state = "CALIBRATING"
+                    lastWord = 0
+                elif inputstr == "esc" or timestampTimeout < time.time():
+                    state = "CALIBRATING"
+                    lastWord = 0
+                    
+                inputstr = ""
+                
+                if status == 0:
+                    calibrationResults[cursorRow][0] += 1
+                    if (lastWord - 1) == cursorRow:
+                        calibrationResults[cursorRow][1] += 1
+                    state = "CALIBRATING"
+                    lastWord = 0
+                
+                clear()
+                    
+                for i in range(0, len(self.models)):
+
+                    if i == cursorRow:
+                        sys.stdout.write("-> ")
+
+                    sys.stdout.write("ID: " + str(i) + " \t" + self.models[i] + "\n")
+                    
+                sys.stdout.write("-------------------\n\n")
+                
+                sys.stdout.write(model_strings[lastWord] + "\n")
+
+                sys.stdout.flush()
+
         ####################################
         logger.debug("finished.")
-
-    def saveMessage(self):
-        """
-        Save the message stored in self.recordedData to a timestamped file.
-        """
-        filename = 'output' + str(int(time.time())) + '.wav'
-        data = b''.join(self.recordedData)
-
-        #use wave to save data
-        wf = wave.open(filename, 'wb')
-        wf.setnchannels(1)
-        wf.setsampwidth(self.audio.get_sample_size(
-            self.audio.get_format_from_width(
-                self.detector.BitsPerSample() / 8)))
-        wf.setframerate(self.detector.SampleRate())
-        wf.writeframes(data)
-        wf.close()
-        logger.debug("finished saving: " + filename)
-        return filename
 
     def terminate(self):
         """
@@ -306,5 +529,7 @@ class HotwordDetector(object):
         self.stream_in.stop_stream()
         self.stream_in.close()
         self.audio.terminate()
+
+
 
 

@@ -36,10 +36,11 @@ class ThreadedDetector(threading.Thread):
                 
                 else:
                     models.append(f)
+                    
     
         assert wakewordFound, \
       'There must be one wakeword file. Add One!'
-    
+        
         return models
 
     def load_sensitivities(self):
@@ -48,8 +49,8 @@ class ThreadedDetector(threading.Thread):
         sensitivityValues = []
     
         with open(MODEL_DIR + 'sensitivities.cfg') as sensitivityFile:
-            sensitivities = [action.rstrip('\n') for sensitivity in sensitivityFile]
-            sensitivities = [action.replace(' ', '').split(':') for action in sensitivities]
+            sensitivities = [sensitivity.rstrip('\n') for sensitivity in sensitivityFile]
+            sensitivities = [sensitivity.replace(' ', '').split(':') for sensitivity in sensitivities]
             models = [model[len(MODEL_DIR):-5] for model in self.models]
             
             
@@ -59,17 +60,14 @@ class ThreadedDetector(threading.Thread):
                 for sensitivity in sensitivities:
 
                     found = False
-
+                    
                     if models[i] == sensitivity[0]:
-                        sensitivityValues.append(sensitivity[1])
+                        sensitivityValues.append(float(sensitivity[1]))
                         found = True 
                         break
-
-                if found == False:
-                    sensitivityValues.append(0.5)
-
                     
-        
+                if not found:
+                    sensitivityValues.append(0.5)
             
             return sensitivityValues
     
@@ -81,23 +79,34 @@ class ThreadedDetector(threading.Thread):
             actions = [action.rstrip('\n') for action in actionFile]
             actions = [action.replace(' ', '').split(':') for action in actions]
             models = [model[len(MODEL_DIR):-5] for model in self.models]
+            cutmodels = range (0, len(self.models))
             
             
             for i in range(len(actions) - 1, -1, -1):
                 if len(actions[i][0]) == 0 or actions[i][0][0] == "#":
                     actions.pop(i)
                     
-        #splitting the keywords string into a list of keywords
             for action in actions:
                 
                 action[0] = action[0].split(',')
                 action[1] = action[1].split(',')
                 
+                for i in range(len(action[0])):                    
+                    cutmodels[models.index(action[0][i])] = -1
+                
+            for i in range(len(cutmodels) - 1, 0, -1):
+                if cutmodels[i] > -1:
+                    self.models.pop(cutmodels[i])
+                    models.pop(cutmodels[i])
+                    
+
+            for action in actions:
+                
                 for i in range(len(action[0])):
                     
                     assert action[0][i] in models, \
-                           "<%s> module not found" % action[0][i]
-                    print action [0][i] + '  ' + str(models.index(action[0][i]) + 1)
+                           "<%s> model not found" % action[0][i]
+                    
                     action[0][i] = models.index(action[0][i]) + 1
                 
                 action[1][0] = ACTION_DIR + action[1][0]
@@ -106,7 +115,7 @@ class ThreadedDetector(threading.Thread):
                 
                 assert action[1][0] in dir, \
                         "<%s> module not found" % action[1][0]
-            print actions
+            
             return actions
 
     def __init__(self, **kwargs):
@@ -130,13 +139,13 @@ class ThreadedDetector(threading.Thread):
         self.detectors = None  # Initialize when thread is run in self.run()
         self.run_kwargs = None  # Initialize when detectors start in self.start_recog()
         
-        change_sensitivity(self.sensitivities)
+        self.change_sensitivity(self.sensitivities)
 
     def initialize_detectors(self):
         """
         Returns initialized Catpie HotwordDetector objects
         """
-        self.detectors = snowboydecoder.HotwordDetector(self.models, self.actions, **self.init_kwargs, sensitivity = self.sensitivities)
+        self.detectors = snowboydecoder.HotwordDetector(self.models, self.actions, **self.init_kwargs)
 
     def run(self):
         """
@@ -204,4 +213,5 @@ class ThreadedDetector(threading.Thread):
         if self.init_kwargs['sensitivity'] != sensitivity:
             self.init_kwargs['sensitivity'] = sensitivity
             self.vars_are_changed = True
+
 
