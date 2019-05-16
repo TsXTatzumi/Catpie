@@ -25,13 +25,13 @@ IFS=$OIFS
 
 
 if [ $1 = "up" ]; then
-signal=21
+signal=16
 
 elif [ $1 = "down" ]; then
-signal=20
+signal=13
 
 elif [ $1 = "mode" ]; then
-signal=16
+signal=19
 
 else
 printf "invalid signal\nsignal:\n	up\n	down\n	mode\n"

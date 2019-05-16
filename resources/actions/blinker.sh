@@ -87,6 +87,8 @@ fi
 sudo systemctl start bluetooth
 echo -e "select-attribute /org/bluez/hci0/dev_$mac/service0009/char000a\nwrite 0x55 0xaa 0x10 0x02 0x01 $mode $cycles 0x02\nexit" | bluetoothctl
 
+killall blinker_tick.sh
+$MODULES_DIR"/blinker_tick.sh" $2 $3 &
 
 OIFS=$IFS; IFS=''
 
