@@ -56,7 +56,7 @@ def pie(state):
         threaded_detector.start_recog(detected_callback=detectedCallback,
                                       action_callback=actionCallback,
                                       stop_callback=stopCallback,
-                                      recording_timeout=80.0,
+                                      recording_timeout=8.0,
                                       sleep_time=0.03)
     elif state == "bake":
         threaded_detector.start_recog(detected_callback=detectedCallback,

@@ -3,6 +3,7 @@ import threading
 import Queue
 import glob
 import os
+import time
 
 
 
@@ -146,6 +147,11 @@ class ThreadedDetector(threading.Thread):
         Returns initialized Catpie HotwordDetector objects
         """
         self.detectors = snowboydecoder.HotwordDetector(self.models, self.actions, **self.init_kwargs)
+        
+        while not self.detectors.hasAudio:
+            self.detectors.terminate()
+            time.sleep(5)
+            self.detectors = snowboydecoder.HotwordDetector(self.models, self.actions, **self.init_kwargs)
 
     def run(self):
         """
@@ -156,15 +162,17 @@ class ThreadedDetector(threading.Thread):
             while True:
                 command = self.commands.get(True)
                 if command == "Start":
-                    self.interrupted = False
-                    if self.vars_are_changed:
+                    if self.vars_are_changed or not self.interrupted:
                         # If there is an existing detector object, terminate it
                         if self.detectors is not None:
                             self.detectors.terminate()
                         self.initialize_detectors()
                         self.vars_are_changed = False
+                    self.interrupted = False
                     # Start detectors - blocks until interrupted by self.interrupted variable
                     self.detectors.start(interrupt_check=lambda: self.interrupted, **self.run_kwargs)
+                    if not self.interrupted:
+                        self.commands.put("Start")
                 elif command == "Terminate":
                     # Program ending - terminate thread
                     break

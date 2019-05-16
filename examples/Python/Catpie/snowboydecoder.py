@@ -7,6 +7,7 @@ import time
 import wave
 import sys
 import keyboard
+import threading
 import logging
 import os
 from os import system, name 
@@ -78,8 +79,8 @@ def play_audio_file(fname=DETECT_DING):
     stream_out.stop_stream()
     stream_out.close()
     audio.terminate()
-
-
+    
+    
 # define our clear function 
 def clear(): 
   
@@ -209,13 +210,25 @@ class HotwordDetector(object):
         with no_alsa_error():
             self.audio = pyaudio.PyAudio()
         self.stream_in = self.audio.open(
-            input=True, output=False,
-            format=self.audio.get_format_from_width(
-                self.detector.BitsPerSample() / 8),
-            channels=self.detector.NumChannels(),
-            rate=self.detector.SampleRate(),
-            frames_per_buffer=2048,
-            stream_callback=audio_callback)
+                input=True, output=False,
+                format=self.audio.get_format_from_width(
+                    self.detector.BitsPerSample() / 8),
+                channels=self.detector.NumChannels(),
+                rate=self.detector.SampleRate(),
+                frames_per_buffer=2048,
+                stream_callback=audio_callback)
+        try:
+##            self.stream_in = self.audio.open(
+##                input=True, output=False,
+##                format=self.audio.get_format_from_width(
+##                    self.detector.BitsPerSample() / 8),
+##                channels=self.detector.NumChannels(),
+##                rate=self.detector.SampleRate(),
+##                frames_per_buffer=2048,
+##                stream_callback=audio_callback)
+            self.hasAudio = True
+        except:
+            self.hasAudio = False
         
         self.models = [model[len(MODEL_DIR):-5] for model in decoder_model]
         self.actions = decoder_actions
@@ -296,16 +309,19 @@ class HotwordDetector(object):
             timestampTimeout = 0
             lastWord = 0
         else:
+##            action_callback(["pigs", "modes","5", "w"])
             state = "PASSIVE"
             
         clear()
         
+        self.numThreads = threading.activeCount()
+        
         while True:
             
-            if interrupt_check():
+            if interrupt_check() or not self.numThreads == threading.activeCount():
                 logger.debug("detect voice break")
                 break
-                
+            
             data = self.ring_buffer.get()
 
             if len(data) == 0:
@@ -324,6 +340,7 @@ class HotwordDetector(object):
                     timestampStartListening  = time.time()
                     timestampEndListening  = timestampStartListening + recording_timeout
                     messageLine1 = "WAKEWORD detected at time: "
+                    messageLine2 = ""
                     messageLine1 += time.strftime("%Y-%m-%d %H:%M:%S",
                                          time.localtime(time.time()))
                     logger.info(messageLine1)
@@ -335,7 +352,8 @@ class HotwordDetector(object):
                     callback = detected_callback[status-1]
                     if callback is not None:
                         callback()
-
+                    
+##                    action_callback(["pigs", "w","5", "1"])
                     state = "ACTIVE"
                     continue
                 
@@ -368,6 +386,7 @@ class HotwordDetector(object):
                     sys.stdout.write(messageLine2)
                     sys.stdout.flush()
                     
+##                    action_callback(["pigs", "w","5", "0"])
                     state = "PASSIVE"
                     continue
 
@@ -519,15 +538,17 @@ class HotwordDetector(object):
                 sys.stdout.flush()
 
         ####################################
-        logger.debug("finished.")
+        
 
     def terminate(self):
         """
         Terminate audio stream. Users cannot call start() again to detect.
         :return: None
         """
-        self.stream_in.stop_stream()
-        self.stream_in.close()
+        if hasattr(self, "stream_in"):
+            self.stream_in.stop_stream()
+            self.stream_in.close()
+        
         self.audio.terminate()
 
 
