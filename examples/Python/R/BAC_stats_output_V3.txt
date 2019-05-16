@@ -1,5 +1,4 @@
 
- 
    Cell Contents
 |-------------------------|
 |                   Count |
@@ -208,3 +207,4 @@ p =  0.8716601
 
  
        Minimum expected frequency: 46.5 
+
